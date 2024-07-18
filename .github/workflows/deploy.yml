@@ -1,0 +1,90 @@
+name: Deploy
+
+on:
+  push:
+    branches: [ test-ci ]
+
+jobs:
+  validate:
+    uses: "./.github/workflows/validate.yml"
+
+  check-pypi-token: # Use intermediary job as secrets cannot be directly referenced in `if:` conditionals; see https://docs.github.com/en/actions/security-guides/using-secrets-in-github-actions#using-secrets-in-a-workflow
+    runs-on: ubuntu-22.04
+    outputs:
+      pypi_token_present: ${{ steps.check_token.outputs.pypi_token_present }}
+    steps:
+      - name: Check PyPI token is defined
+        id: check_token
+        run: |
+          if [[ -n "${{ secrets.TEST_PYPI_TOKEN }}" ]]
+          then
+            echo "pypi_token_present=true" >> $GITHUB_OUTPUT
+          else
+            echo "pypi_token_present=false" >> $GITHUB_OUTPUT
+          fi
+      
+  deploy:
+    runs-on: ubuntu-22.04
+    needs: [ validate, check-pypi-token ]
+    if: needs.validate.outputs.release-type != 'no-release' && needs.check-pypi-token.outputs.pypi_token_present == 'true'
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: 3.9.12
+
+      - name: Restore build
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.pythonLocation }}
+          key: build-${{ env.pythonLocation }}-${{ hashFiles('pyproject.toml') }}-${{ github.sha }}
+          fail-on-cache-miss: true
+
+      - name: Restore built package
+        uses: actions/cache@v4
+        with:
+          path: dist
+          key: release-${{ env.pythonLocation }}-${{ hashFiles('pyproject.toml') }}-${{ github.sha }}
+          fail-on-cache-miss: true
+
+      - name: Update changelog
+        id: release-changelog
+        uses: OpenTermsArchive/manage-changelog/release@v0.4.0
+
+      - name: Save changelog
+        run: |
+          git config user.name "OpenFisca Bot"
+          git config user.email "bot@openfisca.org"
+          git commit -m "Update changelog" CHANGELOG.md
+          git tag v${{ steps.release-changelog.outputs.version }}
+          git push origin
+          git push --tags
+
+      - name: Upload Python package to PyPi
+        run: twine upload --repository testpypi dist/* --username __token__ --password ${{ secrets.TEST_PYPI_TOKEN }}
+
+      - name: Create GitHub release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ steps.release-changelog.outputs.version }}
+          body: ${{ steps.release-changelog.outputs.content }}
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+  clean-changelog:
+    runs-on: ubuntu-22.04
+    needs: [ validate ]
+    if: needs.validate.outputs.release-type == 'no-release'
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Update changelog for release
+        uses: OpenTermsArchive/manage-changelog/release@v0.4.0
+
+      - name: Save changelog
+        run: |
+          git config user.name "OpenFisca Bot"
+          git config user.email "bot@openfisca.org"
+          git commit -m "Clean changelog" CHANGELOG.md
+          git push origin
