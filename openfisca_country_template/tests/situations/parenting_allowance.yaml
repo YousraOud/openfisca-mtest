@@ -1,0 +1,33 @@
+# You can also use test files to describe complex situations with different entities
+# We can run this test on our command line using `openfisca-run-test tests/situations/income_tax.yaml`
+
+- name: Parenting allowance for a two parent household with little income
+  description: Parenting allowance relies on the fortnight incomes of the parents and ages of the children
+  period: 2022
+  absolute_error_margin: 0
+  input:
+    household:
+      parents: [Phil, Saz]
+      children: [Caz, Eille, Nimasay]
+    persons:
+      Phil:
+        birth: 1981-01-15
+        weekly_salary:
+          week:2022-W01:2: 250
+          week:2022-W03:2: 250
+      Saz:
+        birth: 1982-01-15
+        weekly_salary:
+          week:2022-W01:2: 250
+          week:2022-W03:2: 251
+      Caz:
+        birth: 2010-01-15
+      Eille:
+        birth: 2012-01-15
+      Nimasay:
+        birth: 2018-01-15
+  output:
+    household:
+      parenting_allowance:
+        2022-W03: 600
+        2022-W05: 0
