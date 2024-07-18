@@ -1,0 +1,65 @@
+###############################################################################
+## Package description for Anaconda.org
+## It uses Jinja2 templating code to retreive information from setup.py file.
+###############################################################################
+
+{% set name = "OpenFisca-Country-Template" %}
+{% set data = load_setup_py_data() %}
+{% set version = data.get('version') %}
+
+package:
+  name: {{ name|lower }}
+  version: {{ version }}
+
+source:
+  path: ..
+
+build:
+  noarch: python
+  number: 0
+  script: "{{ PYTHON }} -m pip install . -vv"
+
+requirements:
+  host:
+    - python
+    - pip
+  run:
+    {% for req in data.get('install_requires', []) %}
+    - {{ req }}
+    {% endfor %}
+
+test:
+  imports:
+    - openfisca_country_template
+  requires:
+    - pip
+  commands:
+    - pip check
+
+outputs:
+  - name: openfisca-country-template
+
+  - name: openfisca-country-template-dev
+    build:
+      noarch: python
+    requirements:
+      host:
+        - python
+      run:
+        - python >=3.6,<4.0
+        {% for req in data.get('dev_requirements', []) %}
+        - {{ req }}
+        {% endfor %}
+        - {{ pin_subpackage('openfisca-country-template', exact=True) }}
+
+about:
+  home: https://fr.openfisca.org/
+  license_family: AGPL
+  license: AGPL-3.0-only
+  license_file: LICENSE
+  summary: "OpenFisca tax and benefit system for Country-Template."
+  description: |
+    OpenFisca is a versatile microsimulation free software.
+    This repository contains the Country-Template module, to work with OpenFisca.
+  doc_url: https://fr.openfisca.org/
+  dev_url: https://github.com/openfisca/country-template/
