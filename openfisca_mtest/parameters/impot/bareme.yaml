@@ -1,0 +1,47 @@
+description: Bareme annuel de l'impot sur le revenu
+brackets:
+  - rate: # Define a 1st bracket
+      2024-01-01:
+        value: 0.0  # The rate applied to the first bracket was 0% 
+    threshold:
+      2024-01-01:
+        value: 0.0
+  - rate: # Define a 2nd bracket
+      2024-01-01:
+        value: 0.1  
+    threshold:
+      2024-01-01:
+        value: 30_001  # The 2nd bracket starts for wages beyond 30_001
+  - rate: 
+      2024-01-01:
+        value: 0.2  
+    threshold:
+      2024-01-01:
+        value: 50_001
+  - rate: 
+      2024-01-01:
+        value: 0.3 
+    threshold:
+      2024-01-01:
+        value: 60_001
+  - rate: 
+      2024-01-01:
+        value: 0.34 
+    threshold:
+      2024-01-01:
+        value: 80_001 
+  - rate: 
+      2024-01-01:
+        value: 0.38
+    threshold:
+      2024-01-01:
+        value: 180_001
+metadata:
+  #type: marginal_rate
+  threshold_unit: currency-MAD
+  rate_unit: /1
+  reference:
+    2024-01-01:
+      href: chrome-extension://efaidnbmnnnibpcajpcglclefindmkaj/https://tax.gov.ma/wps/wcm/connect/2cf9f1a5-99b7-4ac1-919b-7cdf5feadb25/CGI%2B2024%2BFR.pdf?MOD=AJPERES&CACHEID=ROOTWORKSPACE-2cf9f1a5-99b7-4ac1-919b-7cdf5feadb25-o-mHRGE
+      title: article 73 du code general des impots 
+
